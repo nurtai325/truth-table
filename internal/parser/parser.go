@@ -41,10 +41,6 @@ Loop:
 			return nil, ErrIllegalToken
 		case scanner.NOT:
 			break
-		case scanner.LPAREN:
-			break
-		case scanner.RPAREN:
-			break
 		default:
 			if scanner.IsOperator(token) {
 				operators = append(operators, i)
@@ -81,11 +77,13 @@ func (p *parser) init(tokens []scanner.Token, opers []int, vars []string) {
 func (p *parser) parse() *Ast {
 	fmt.Println(p.tokens, p.opers, p.vars)
 	switch {
+	case len(p.tokens) == 0:
+		return nil
 	case len(p.tokens) == 1:
-		return p.parseVar()
+		return p.parseToken()
 	case len(p.tokens) == 2 && p.tokens[0] == scanner.NOT:
 		p.tokens = p.tokens[1:]
-		ast := p.parseVar()
+		ast := p.parseToken()
 		ast.negated = true
 		return ast
 	case len(p.opers) == 0:
@@ -107,7 +105,7 @@ func (p *parser) parse() *Ast {
 	return &ast
 }
 
-func (p *parser) parseVar() *Ast {
+func (p *parser) parseToken() *Ast {
 	var ast Ast
 	ast.Tok = p.tokens[0]
 	if p.tokens[0] == scanner.VAR {
@@ -118,6 +116,9 @@ func (p *parser) parseVar() *Ast {
 }
 
 func (p *parser) splitTokens(operIndex int) (lTokens []scanner.Token, rTokens []scanner.Token) {
+	if operIndex >= len(p.tokens) {
+		return make([]scanner.Token, 0), make([]scanner.Token, 0)
+	}
 	lTokens = p.tokens[:operIndex]
 	rTokens = p.tokens[operIndex+1:]
 	for i := 1; i < len(p.opers); i++ {
