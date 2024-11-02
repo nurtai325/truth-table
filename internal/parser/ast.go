@@ -1,27 +1,31 @@
 package parser
 
-import "github.com/nurtai325/truth-table/internal/scanner"
+import (
+	"fmt"
 
-type Token struct {
-	tok scanner.Token
-	lit string
-}
+	"github.com/nurtai325/truth-table/internal/scanner"
+)
 
 type Ast struct {
-	Left *Ast
-	Right *Ast
-	operFunc operFunc
-	Tok Token
+	Left    *Ast
+	Right   *Ast
+	Tok     scanner.Token
+	Lit     string
+	negated bool
 }
 
-func (ast *Ast) DfsWalk(f func(ast *Ast)) {
+func (ast *Ast) Walk(f func(ast *Ast)) {
+	if ast == nil {
+		return
+	}
+	ast.Left.Walk(f)
 	f(ast)
-	if ast.Left != nil {
-		ast.Left.DfsWalk(f)
-	}
-	if ast.Right != nil {
-		ast.Right.DfsWalk(f)
-	}
+	ast.Right.Walk(f)
 }
 
-type operFunc func(a, b *bool) *bool
+func (a Ast) String() string {
+	if scanner.IsOperator(a.Tok) {
+		return fmt.Sprintf("%v", a.Tok)
+	}
+	return fmt.Sprintf("%v %s negated: %t", a.Tok, a.Lit, a.negated)
+}

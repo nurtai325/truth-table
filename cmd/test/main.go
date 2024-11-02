@@ -2,31 +2,21 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/nurtai325/truth-table/internal/parser"
-	"github.com/nurtai325/truth-table/internal/scanner"
 )
 
 func main() {
-	var s scanner.Scanner
-	s.SetSrc([]byte("a||b||c"))
-
-	var tokens []scanner.Token
-	for {
-		tok, _, _ := s.Scan()
-		if tok == scanner.EOF {
-			break
-		}
-		tokens = append(tokens, tok)
-	}
-
-	ast, err := parser.Parse(tokens)
+	// exp := "a||b->b&&d<=>b"
+	exp := "!a||b->!b&&d<=>!b"
+	// exp := "(a||b)->(b&&d)<=>b"
+	// exp := "(a||b)||c"
+	ast, err := parser.Parse(&exp)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	fmt.Println(ast.Left.Tok)
-	fmt.Println(ast.Tok)
-	fmt.Println(ast.Right.Left.Tok)
-	fmt.Println(ast.Right.Tok)
-	fmt.Println(ast.Right.Right.Tok)
+	ast.Walk(func(ast *parser.Ast) {
+		fmt.Println(ast)
+	})
 }

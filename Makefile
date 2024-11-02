@@ -5,4 +5,4 @@ truth-table: $(src)
 test: cmd/test/main.go $(src)
 	go build -o test cmd/test/main.go
 clean:
-	rm truth-table
+	rm truth-table test

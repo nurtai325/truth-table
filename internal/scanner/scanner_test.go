@@ -44,7 +44,6 @@ func TestScannerNormal(t *testing.T) {
 			t.Fatalf("unexpected err: %v", err)
 		}
 	}
-
 }
 
 func TestScannerErr(t *testing.T) {
@@ -107,7 +106,7 @@ func TestNextRune(t *testing.T) {
 		t.Logf("source: %s", testCase)
 
 		for _, testRune := range testCase {
-			if testRune == ' ' || testRune == '\n'  {
+			if testRune == ' ' || testRune == '\n' {
 				continue
 			}
 			r, err := s.NextRune()
