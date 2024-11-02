@@ -8,6 +8,7 @@ test: cmd/test/main.go $(src)
 push:
 	make
 	make test
+	go test ./...
 	make clean
 	git push
 clean:
