@@ -11,7 +11,7 @@ type Ast struct {
 	Right   *Ast
 	Tok     scanner.Token
 	Lit     string
-	negated bool
+	Negated bool
 }
 
 func (ast *Ast) Walk(f func(ast *Ast)) {
@@ -27,5 +27,5 @@ func (a Ast) String() string {
 	if scanner.IsOperator(a.Tok) {
 		return fmt.Sprintf("%v", a.Tok)
 	}
-	return fmt.Sprintf("%v %s negated: %t", a.Tok, a.Lit, a.negated)
+	return fmt.Sprintf("%v %s negated: %t", a.Tok, a.Lit, a.Negated)
 }

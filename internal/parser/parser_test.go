@@ -4,21 +4,38 @@ import (
 	"testing"
 
 	"github.com/nurtai325/truth-table/internal/parser"
+	"github.com/nurtai325/truth-table/internal/scanner"
 )
 
 func TestParserNormal(t *testing.T) {
 	exp := "!(a || !b) -> (b && d) <=> !b"
-	testAstNodes := []*parser.Ast{}
+	testAstNodes := [...]*parser.Ast{
+		{nil, nil, scanner.NOT, "", false},
+		{nil, nil, scanner.LPAREN, "", false},
+		{nil, nil, scanner.VAR, "a", false},
+		{nil, nil, scanner.OR, "", false},
+		{nil, nil, scanner.VAR, "b", true},
+		{nil, nil, scanner.RPAREN, "", false},
+		{nil, nil, scanner.IMPLICATION, "", false},
+		{nil, nil, scanner.LPAREN, "", false},
+		{nil, nil, scanner.VAR, "b", false},
+		{nil, nil, scanner.AND, "", false},
+		{nil, nil, scanner.VAR, "d", false},
+		{nil, nil, scanner.RPAREN, "", false},
+		{nil, nil, scanner.IF_AND_ONLY_IF, "", false},
+		{nil, nil, scanner.VAR, "b", true},
+	}
 
-	ast, err := parser.Parse(&exp)
+	ast, _, err := parser.Parse(&exp)
 	if err != nil {
 		t.Fatal(err)
 	}
 	i := 0
 	ast.Walk(func(ast *parser.Ast) {
-		if !equalAst(ast, testAstNodes[i]) {
-			t.Fatalf("%d %v %v", i, ast, testAstNodes[i])
+		if !equalAst(testAstNodes[i], ast) {
+			t.Fatalf("%d: expected: %v actual: %v", i+1, testAstNodes[i], ast)
 		}
+		i++
 	})
 }
 

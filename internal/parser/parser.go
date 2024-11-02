@@ -2,7 +2,6 @@ package parser
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/nurtai325/truth-table/internal/scanner"
 )
@@ -31,8 +30,6 @@ func Parse(exp *string) (ast *Ast, varMap map[string]string, err error) {
 	p := new(parser)
 	p.init(tokens, operators, variables)
 	varMap = p.varMap()
-	fmt.Println(variables)
-	fmt.Println(varMap)
 	ast = p.parse()
 	return
 }
@@ -89,7 +86,7 @@ func (p *parser) parse() *Ast {
 	case len(p.tokens) == 2 && p.tokens[0] == scanner.NOT:
 		p.tokens = p.tokens[1:]
 		ast := p.parseToken()
-		ast.negated = true
+		ast.Negated = true
 		return ast
 	case len(p.opers) == 0:
 		panic(ErrSyntax)
