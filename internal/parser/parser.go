@@ -19,7 +19,25 @@ type parser struct {
 	cursor int
 }
 
-func Parse(exp *string) (ast *Ast, err error) {
+func Parse(exp *string) (ast *Ast, varMap map[string]string, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			ast = nil
+			err = e.(error)
+		}
+	}()
+
+	tokens, operators, variables := scanAll(exp)
+	p := new(parser)
+	p.init(tokens, operators, variables)
+	varMap = p.varMap()
+	fmt.Println(variables)
+	fmt.Println(varMap)
+	ast = p.parse()
+	return
+}
+
+func scanAll(exp *string) ([]scanner.Token, []int, []string) {
 	var s scanner.Scanner
 	src := []byte(*exp)
 	s.SetSrc(src)
@@ -31,14 +49,14 @@ Loop:
 	for i := 0; true; i++ {
 		token, lit, err := s.Scan()
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
 
 		switch token {
 		case scanner.EOF:
 			break Loop
 		case scanner.ILLEGAL:
-			return nil, ErrIllegalToken
+			panic(ErrIllegalToken)
 		case scanner.NOT:
 			break
 		default:
@@ -52,19 +70,7 @@ Loop:
 			variables = append(variables, lit)
 		}
 	}
-
-	// TODO: uncomment for proper error handling
-	// defer func() {
-	// 	if e := recover(); e != nil {
-	// 		ast = nil
-	// 		err = e.(error)
-	// 	}
-	// }()
-
-	p := new(parser)
-	p.init(tokens, operators, variables)
-	ast = p.parse()
-	return
+	return tokens, operators, variables
 }
 
 func (p *parser) init(tokens []scanner.Token, opers []int, vars []string) {
@@ -75,7 +81,6 @@ func (p *parser) init(tokens []scanner.Token, opers []int, vars []string) {
 }
 
 func (p *parser) parse() *Ast {
-	fmt.Println(p.tokens, p.opers, p.vars)
 	switch {
 	case len(p.tokens) == 0:
 		return nil
@@ -125,4 +130,20 @@ func (p *parser) splitTokens(operIndex int) (lTokens []scanner.Token, rTokens []
 		p.opers[i] = p.opers[i] - operIndex - 1
 	}
 	return
+}
+
+func (p *parser) varMap() map[string]string {
+	visited := make([]string, 0)
+	variablesMap := make(map[string]string)
+Outer:
+	for i := 0; i < len(p.vars); i++ {
+		for j := 0; i < len(visited); j++ {
+			if p.vars[i] == visited[j] {
+				continue Outer
+			}
+		}
+		visited = append(visited, p.vars[i])
+		variablesMap[p.vars[i]] = p.vars[i]
+	}
+	return variablesMap
 }

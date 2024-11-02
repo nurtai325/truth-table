@@ -8,12 +8,12 @@ import (
 )
 
 func main() {
-	exp := "!(!a||!b)->(!b&&!d)<=>!b"
+	exp := "!(a || !b) -> (b && d) <=> !b"
 	// exp := "(a||b)->(b&&d)<=>b"
 	// exp := "(a||b)||c"
 	// exp := "(a||b)"
 	// exp := "a||b||c"
-	ast, err := parser.Parse(&exp)
+	ast, _, err := parser.Parse(&exp)
 	if err != nil {
 		log.Fatal(err)
 	}
