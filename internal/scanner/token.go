@@ -8,6 +8,10 @@ func IsOperator(t Token) bool {
 	return t > operBegin && t < operEnd
 }
 
+func IsParentheses(t Token) bool {
+	return t == LPAREN || t == RPAREN
+}
+
 type Token int
 
 func (t Token) String() string {
@@ -52,4 +56,28 @@ var operInitals = [...]rune{
 	OR:             '|',
 	IMPLICATION:    '-',
 	IF_AND_ONLY_IF: '<',
+}
+
+var operActions = []func(a, b bool) bool{
+	AND: func(a, b bool) bool {
+		return a && b
+	},
+	OR: func(a, b bool) bool {
+		return a || b
+	},
+	NOT: func(a, _ bool) bool {
+		return !a
+	},
+	IMPLICATION: func(a, b bool) bool {
+		if a && b {
+			return false
+		}
+		return true
+	},
+	IF_AND_ONLY_IF: func(a, b bool) bool {
+		if (a && b) || (!a && !b) {
+			return true
+		}
+		return false
+	},
 }

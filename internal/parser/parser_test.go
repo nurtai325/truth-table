@@ -10,28 +10,27 @@ import (
 func TestParserNormal(t *testing.T) {
 	exp := "!(a || !b) -> (b && d) <=> !b"
 	testAstNodes := [...]*parser.Ast{
-		{nil, nil, scanner.NOT, "", false},
-		{nil, nil, scanner.LPAREN, "", false},
-		{nil, nil, scanner.VAR, "a", false},
-		{nil, nil, scanner.OR, "", false},
-		{nil, nil, scanner.VAR, "b", true},
-		{nil, nil, scanner.RPAREN, "", false},
-		{nil, nil, scanner.IMPLICATION, "", false},
-		{nil, nil, scanner.LPAREN, "", false},
-		{nil, nil, scanner.VAR, "b", false},
-		{nil, nil, scanner.AND, "", false},
-		{nil, nil, scanner.VAR, "d", false},
-		{nil, nil, scanner.RPAREN, "", false},
-		{nil, nil, scanner.IF_AND_ONLY_IF, "", false},
-		{nil, nil, scanner.VAR, "b", true},
+		{nil, nil, scanner.NOT, "", false, nil},
+		{nil, nil, scanner.LPAREN, "", false, nil},
+		{nil, nil, scanner.VAR, "a", false, nil},
+		{nil, nil, scanner.OR, "", false, nil},
+		{nil, nil, scanner.VAR, "b", true, nil},
+		{nil, nil, scanner.RPAREN, "", false, nil},
+		{nil, nil, scanner.IMPLICATION, "", false, nil},
+		{nil, nil, scanner.LPAREN, "", false, nil},
+		{nil, nil, scanner.VAR, "b", false, nil},
+		{nil, nil, scanner.AND, "", false, nil},
+		{nil, nil, scanner.VAR, "d", false, nil},
+		{nil, nil, scanner.RPAREN, "", false, nil},
+		{nil, nil, scanner.IF_AND_ONLY_IF, "", false, nil},
+		{nil, nil, scanner.VAR, "b", true, nil},
 	}
-
-	ast, _, err := parser.Parse(&exp)
+	ast, err := parser.Parse(&exp)
 	if err != nil {
 		t.Fatal(err)
 	}
 	i := 0
-	ast.Walk(func(ast *parser.Ast) {
+	ast.DfsWalk(func(ast *parser.Ast) {
 		if !equalAst(testAstNodes[i], ast) {
 			t.Fatalf("%d: expected: %v actual: %v", i+1, testAstNodes[i], ast)
 		}
@@ -50,5 +49,6 @@ func equalAst(a, b *parser.Ast) bool {
 	}
 }
 
+// TODO: test correct err checking
 func TestParserErr(t *testing.T) {
 }

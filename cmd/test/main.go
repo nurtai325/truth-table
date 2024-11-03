@@ -8,16 +8,20 @@ import (
 )
 
 func main() {
-	exp := "!(a || !b) -> (b && d) <=> !b"
+	// exp := "!(a || !b) -> (b && d) <=> !b"
 	// exp := "(a||b)->(b&&d)<=>b"
 	// exp := "(a||b)||c"
-	// exp := "(a||b)"
 	// exp := "a||b||c"
-	ast, _, err := parser.Parse(&exp)
+	exp := "(a||b)"
+	// exp := "a||b"
+	// exp := "a || b || !c || !d"
+	fmt.Println(exp)
+	ast, err := parser.Parse(&exp)
 	if err != nil {
 		log.Fatal(err)
 	}
-	ast.Walk(func(ast *parser.Ast) {
+	ast.DfsWalk(func(ast *parser.Ast) {
 		fmt.Println(ast)
 	})
+	ast.Print()
 }

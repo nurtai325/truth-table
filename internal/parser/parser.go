@@ -2,6 +2,7 @@ package parser
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/nurtai325/truth-table/internal/scanner"
 )
@@ -18,19 +19,18 @@ type parser struct {
 	cursor int
 }
 
-func Parse(exp *string) (ast *Ast, varMap map[string]string, err error) {
+func Parse(exp *string) (ast *Ast, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			ast = nil
 			err = e.(error)
 		}
 	}()
-
 	tokens, operators, variables := scanAll(exp)
 	p := new(parser)
 	p.init(tokens, operators, variables)
-	varMap = p.varMap()
 	ast = p.parse()
+	ast.VarMap = p.varMap()
 	return
 }
 
@@ -104,7 +104,36 @@ func (p *parser) parse() *Ast {
 	p.tokens = rTokens
 	ast.Right = p.parse()
 
+	p.check(&ast)
 	return &ast
+}
+
+func (p *parser) check(ast *Ast) {
+	nodes := []*Ast{}
+	parentheses := 0
+	ast.DfsWalk(func(ast *Ast) {
+		if len(nodes) == 0 {
+			return
+		}
+		prevNode := nodes[len(nodes)-1]
+		err := fmt.Errorf("%w at %v %v", ErrSyntax, prevNode, ast)
+		if scanner.IsOperator(prevNode.Tok) && scanner.IsOperator(ast.Tok) {
+			panic(err)
+		} else if prevNode.Tok == scanner.VAR && ast.Tok == scanner.VAR {
+			panic(err)
+		}
+		if ast.Tok == scanner.LPAREN {
+			parentheses++
+		} else if ast.Tok == scanner.RPAREN {
+			parentheses--
+		}
+		nodes = append(nodes, ast)
+	})
+	if parentheses > 0 {
+		panic(fmt.Errorf("%w: unclosed parentheses", ErrSyntax))
+	} else if parentheses < 0 {
+		panic(fmt.Errorf("%w: not opened parentheses", ErrSyntax))
+	}
 }
 
 func (p *parser) parseToken() *Ast {
