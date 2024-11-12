@@ -20,19 +20,9 @@ Prerequisites
 
 Steps
 
-    Clone the repository:
-
-git clone https://github.com/yourusername/truth-table](https://github.com/nurtai325/truth-table
-cd truth-table-generator
-
-Make sure you have Go and Make installed. You can check by running:
-
-go version
-make --version
-
-Build the project:
-
-make
+    git clone https://github.com/yourusername/truth-table](https://github.com/nurtai325/truth-table
+    cd truth-table-generator
+    make
 
 Run the program:
 
