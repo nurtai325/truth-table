@@ -36,7 +36,7 @@ Once the program is running, you can enter expressions directly via the REPL. He
 
     -e <expression> : Specify a logical expression to generate its truth table. For example:
 
-    ./truth-table -e "(A and B) or !C"
+    ./truth-table -e 'a||!b->!(c<=>d)'
 
     This command will output the truth table for the provided logical expression.
 
