@@ -15,14 +15,14 @@ Features
 Installation
 Prerequisites
 
-    Go (version 1.16+)
+    Go
     Make
 
 Steps
 
     Clone the repository:
 
-git clone https://github.com/yourusername/truth-table-generator.git
+git clone https://github.com/yourusername/truth-table](https://github.com/nurtai325/truth-table
 cd truth-table-generator
 
 Make sure you have Go and Make installed. You can check by running:
@@ -49,20 +49,6 @@ Once the program is running, you can enter expressions directly via the REPL. He
     ./truth-table -e "(A and B) or !C"
 
     This command will output the truth table for the provided logical expression.
-
-Example
-
-$ ./truth-table -e "(A and B) or !C"
-A | B | C | (A and B) or !C
----------------------------
-T | T | T | T
-T | T | F | T
-T | F | T | F
-T | F | F | T
-F | T | T | T
-F | T | F | F
-F | F | T | F
-F | F | F | F
 
 Supported Operators
 
