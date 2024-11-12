@@ -16,8 +16,22 @@ type Ast struct {
 	Vars    map[string]bool
 }
 
-func (ast *Ast) Eval() bool {
-	return false
+func (a *Ast) Eval() bool {
+	if a.Tok == scanner.VAR {
+		value := a.Vars[a.Lit]
+		if a.Negated {
+			value = !value
+		}
+		return value
+	}
+	a.Left.Vars = a.Vars
+	a.Right.Vars = a.Vars
+	l, r := a.Left.Eval(), a.Right.Eval()
+	res := scanner.Operate(l, r, a.Tok)
+	if a.Negated {
+		res = !res
+	}
+	return res
 }
 
 func (ast *Ast) DfsWalk(f func(ast *Ast)) {

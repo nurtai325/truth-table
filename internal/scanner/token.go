@@ -63,26 +63,24 @@ var operInitals = [...]rune{
 	IF_AND_ONLY_IF: '<',
 }
 
-var operActions = []func(a, b bool) bool{
+type operFunc func(a, b bool) bool
+
+var operActions = []operFunc{
 	AND: func(a, b bool) bool {
 		return a && b
 	},
 	OR: func(a, b bool) bool {
 		return a || b
 	},
-	NOT: func(a, _ bool) bool {
-		return !a
-	},
 	IMPLICATION: func(a, b bool) bool {
-		if a && b {
-			return false
-		}
-		return true
+		return !a || b
 	},
 	IF_AND_ONLY_IF: func(a, b bool) bool {
-		if (a && b) || (!a && !b) {
-			return true
-		}
-		return false
+		return a == b
 	},
+}
+
+func Operate(a, b bool, oper Token) bool {
+	f := operActions[oper]
+	return f(a, b)
 }
