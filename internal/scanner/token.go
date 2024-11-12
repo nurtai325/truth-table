@@ -1,5 +1,10 @@
 package scanner
 
+func OperAction(a, b bool, tok Token) bool {
+	action := operActions[tok]
+	return action(a, b)
+}
+
 func IsValidToken(t Token) bool {
 	return t > BEGIN && t < END && t != operBegin && t != operEnd
 }

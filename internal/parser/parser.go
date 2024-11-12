@@ -2,9 +2,14 @@ package parser
 
 import (
 	"errors"
-	"fmt"
+	"slices"
 
 	"github.com/nurtai325/truth-table/internal/scanner"
+)
+
+const (
+	T = "T"
+	F = "F"
 )
 
 var (
@@ -19,18 +24,66 @@ type parser struct {
 	cursor int
 }
 
-func Parse(exp *string) (ast *Ast, err error) {
+func Parse(exp *string, debug bool) (t truthTable, err error) {
 	defer func() {
+		if debug {
+			return
+		}
 		if e := recover(); e != nil {
-			ast = nil
+			t = nil
 			err = e.(error)
 		}
 	}()
-	tokens, operators, variables := scanAll(exp)
+
+	var ast Ast
 	p := new(parser)
+
+	tokens, operators, variables := scanAll(exp)
 	p.init(tokens, operators, variables)
-	ast = p.parse()
-	ast.VarMap = p.varMap()
+	vars := make([]string, len(p.vars))
+	copy(vars, p.vars)
+	ast = *p.parse()
+
+	vars = p.filterVars(vars)
+	varMap := make(map[string]bool, len(vars))
+	values, height := emptyTable(len(vars))
+	height += 1
+	width := len(vars) + 1
+
+	t = make(truthTable, height)
+	header := make([]string, width)
+	for i := 0; i < len(vars); i++ {
+		header[i] = vars[i]
+	}
+	header[len(header)-1] = *exp
+	t[0] = header
+
+	for i := 0; i < height-1; i++ {
+		for j := 0; j < len(vars); j++ {
+			varMap[vars[j]] = values[i][j]
+		}
+		ast.Vars = varMap
+		res := ast.Eval()
+
+		row := make([]string, width)
+		cell := F
+		for j := 0; j < width-1; j++ {
+			if values[i][j] {
+				cell = T
+			} else {
+				cell = F
+			}
+			row[j] = cell
+		}
+		if res {
+			cell = T
+		} else {
+			cell = F
+		}
+		row[width-1] = cell
+		t[i+1] = row
+	}
+
 	return
 }
 
@@ -48,7 +101,6 @@ Loop:
 		if err != nil {
 			panic(err)
 		}
-
 		switch token {
 		case scanner.EOF:
 			break Loop
@@ -61,7 +113,6 @@ Loop:
 				operators = append(operators, i)
 			}
 		}
-
 		tokens = append(tokens, token)
 		if token == scanner.VAR {
 			variables = append(variables, lit)
@@ -91,49 +142,41 @@ func (p *parser) parse() *Ast {
 	case len(p.opers) == 0:
 		panic(ErrSyntax)
 	}
+
+	negated := false
+	if p.tokens[0] == scanner.NOT && p.tokens[1] == scanner.LPAREN {
+		for i := 0; i < len(p.opers); i++ {
+			p.opers[i] = p.opers[i] - 1
+		}
+		p.tokens = p.tokens[1:]
+		negated = true
+	}
+
 	operIndex := p.opers[0]
-	lTokens, rTokens := p.splitTokens(operIndex)
-	p.opers = p.opers[1:]
+	lTokens, rTokens, oper := p.splitTokens(operIndex)
 
-	p.tokens = []scanner.Token{p.tokens[operIndex]}
-	ast := *p.parse()
+	var ast Ast
+	p.tokens = []scanner.Token{oper}
+	if oper == scanner.EOF {
+		p.tokens = lTokens
+		ast = *p.parse()
+		if negated {
+			ast.Negated = negated
+		}
+		return &ast
+	}
 
+	ast = *p.parse()
 	p.tokens = lTokens
 	ast.Left = p.parse()
+	if negated {
+		ast.Left.Negated = negated
+	}
 
 	p.tokens = rTokens
 	ast.Right = p.parse()
 
-	p.check(&ast)
 	return &ast
-}
-
-func (p *parser) check(ast *Ast) {
-	nodes := []*Ast{}
-	parentheses := 0
-	ast.DfsWalk(func(ast *Ast) {
-		if len(nodes) == 0 {
-			return
-		}
-		prevNode := nodes[len(nodes)-1]
-		err := fmt.Errorf("%w at %v %v", ErrSyntax, prevNode, ast)
-		if scanner.IsOperator(prevNode.Tok) && scanner.IsOperator(ast.Tok) {
-			panic(err)
-		} else if prevNode.Tok == scanner.VAR && ast.Tok == scanner.VAR {
-			panic(err)
-		}
-		if ast.Tok == scanner.LPAREN {
-			parentheses++
-		} else if ast.Tok == scanner.RPAREN {
-			parentheses--
-		}
-		nodes = append(nodes, ast)
-	})
-	if parentheses > 0 {
-		panic(fmt.Errorf("%w: unclosed parentheses", ErrSyntax))
-	} else if parentheses < 0 {
-		panic(fmt.Errorf("%w: not opened parentheses", ErrSyntax))
-	}
 }
 
 func (p *parser) parseToken() *Ast {
@@ -146,30 +189,90 @@ func (p *parser) parseToken() *Ast {
 	return &ast
 }
 
-func (p *parser) splitTokens(operIndex int) (lTokens []scanner.Token, rTokens []scanner.Token) {
+func (p *parser) splitTokens(operIndex int) ([]scanner.Token, []scanner.Token, scanner.Token) {
+	var lTokens []scanner.Token
+	var rTokens []scanner.Token
+
 	if operIndex >= len(p.tokens) {
-		return make([]scanner.Token, 0), make([]scanner.Token, 0)
+		panic(ErrSyntax)
 	}
-	lTokens = p.tokens[:operIndex]
-	rTokens = p.tokens[operIndex+1:]
-	for i := 1; i < len(p.opers); i++ {
-		p.opers[i] = p.opers[i] - operIndex - 1
+	oper := p.tokens[operIndex]
+	if oper == scanner.RPAREN || oper == scanner.NOT {
+		panic(ErrSyntax)
 	}
-	return
+
+	if oper != scanner.LPAREN {
+		lTokens = p.tokens[:operIndex]
+		rTokens = p.tokens[operIndex+1:]
+
+		for i := 1; i < len(p.opers); i++ {
+			p.opers[i] = p.opers[i] - operIndex - 1
+		}
+		p.opers = p.opers[1:]
+
+		return lTokens, rTokens, oper
+	}
+
+	rParenIdx := p.nextRParen()
+	rParen := p.opers[rParenIdx]
+	operLen := len(p.opers)
+
+	lTokens = p.tokens[1:rParen]
+	if rParen+1 == len(p.tokens) {
+		for i := 0; i < len(p.opers); i++ {
+			p.opers[i] = p.opers[i] - 1
+		}
+		p.opers = p.opers[1 : operLen-1]
+		return lTokens, rTokens, scanner.EOF
+	}
+
+	oper = p.tokens[rParen+1]
+	rTokens = p.tokens[rParen+2:]
+
+	lOpers := p.opers[:rParenIdx]
+	rOpers := p.opers[rParenIdx+2:]
+	for i := 0; i < len(lOpers); i++ {
+		lOpers[i] = lOpers[i] - 1
+	}
+
+	offset := len(lOpers) + 2
+	for i := 0; i < len(rOpers); i++ {
+		rOpers[i] = rOpers[i] - offset
+	}
+
+	p.opers = slices.Concat(lOpers, rOpers)
+	p.opers = p.opers[1:]
+	return lTokens, rTokens, oper
 }
 
-func (p *parser) varMap() map[string]string {
-	visited := make([]string, 0)
-	variablesMap := make(map[string]string)
+func (p *parser) nextRParen() int {
+	depth := 0
+	for i := 1; i < len(p.opers); i++ {
+		tokIdx := p.opers[i]
+		if p.tokens[tokIdx] == scanner.LPAREN {
+			depth++
+			continue
+		}
+		if p.tokens[tokIdx] == scanner.RPAREN {
+			if depth == 0 {
+				return i
+			}
+			depth--
+		}
+	}
+	panic(ErrSyntax)
+}
+
+func (p *parser) filterVars(unFilteredVars []string) []string {
+	vars := make([]string, 0)
 Outer:
-	for i := 0; i < len(p.vars); i++ {
-		for j := 0; i < len(visited); j++ {
-			if p.vars[i] == visited[j] {
+	for i := 0; i < len(unFilteredVars); i++ {
+		for j := 0; j < len(vars); j++ {
+			if unFilteredVars[i] == vars[j] {
 				continue Outer
 			}
 		}
-		visited = append(visited, p.vars[i])
-		variablesMap[p.vars[i]] = p.vars[i]
+		vars = append(vars, unFilteredVars[i])
 	}
-	return variablesMap
+	return vars
 }

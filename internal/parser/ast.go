@@ -13,14 +13,13 @@ type Ast struct {
 	Tok     scanner.Token
 	Lit     string
 	Negated bool
-	VarMap  map[string]string
+	Vars    map[string]bool
 }
 
-func (ast *Ast) Eval(subExpressions bool) (truthTable, error) {
-	return nil, nil
+func (ast *Ast) Eval() bool {
+	return false
 }
 
-// TODO: ast evaluation to result table
 func (ast *Ast) DfsWalk(f func(ast *Ast)) {
 	if ast == nil {
 		return
@@ -63,8 +62,5 @@ type nodeWithDepth struct {
 }
 
 func (a Ast) String() string {
-	if scanner.IsOperator(a.Tok) {
-		return fmt.Sprintf("%v", a.Tok)
-	}
 	return fmt.Sprintf("%v %s negated: %t", a.Tok, a.Lit, a.Negated)
 }

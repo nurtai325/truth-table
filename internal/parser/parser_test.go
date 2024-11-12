@@ -10,20 +10,20 @@ import (
 func TestParserNormal(t *testing.T) {
 	exp := "!(a || !b) -> (b && d) <=> !b"
 	testAstNodes := [...]*parser.Ast{
-		{nil, nil, scanner.NOT, "", false, nil},
-		{nil, nil, scanner.LPAREN, "", false, nil},
-		{nil, nil, scanner.VAR, "a", false, nil},
-		{nil, nil, scanner.OR, "", false, nil},
-		{nil, nil, scanner.VAR, "b", true, nil},
-		{nil, nil, scanner.RPAREN, "", false, nil},
-		{nil, nil, scanner.IMPLICATION, "", false, nil},
-		{nil, nil, scanner.LPAREN, "", false, nil},
-		{nil, nil, scanner.VAR, "b", false, nil},
-		{nil, nil, scanner.AND, "", false, nil},
-		{nil, nil, scanner.VAR, "d", false, nil},
-		{nil, nil, scanner.RPAREN, "", false, nil},
-		{nil, nil, scanner.IF_AND_ONLY_IF, "", false, nil},
-		{nil, nil, scanner.VAR, "b", true, nil},
+		{nil, nil, scanner.NOT, "", false, nil, ""},
+		{nil, nil, scanner.LPAREN, "", false, nil, ""},
+		{nil, nil, scanner.VAR, "a", false, nil, ""},
+		{nil, nil, scanner.OR, "", false, nil, ""},
+		{nil, nil, scanner.VAR, "b", true, nil, ""},
+		{nil, nil, scanner.RPAREN, "", false, nil, ""},
+		{nil, nil, scanner.IMPLICATION, "", false, nil, ""},
+		{nil, nil, scanner.LPAREN, "", false, nil, ""},
+		{nil, nil, scanner.VAR, "b", false, nil, ""},
+		{nil, nil, scanner.AND, "", false, nil, ""},
+		{nil, nil, scanner.VAR, "d", false, nil, ""},
+		{nil, nil, scanner.RPAREN, "", false, nil, ""},
+		{nil, nil, scanner.IF_AND_ONLY_IF, "", false, nil, ""},
+		{nil, nil, scanner.VAR, "b", true, nil, ""},
 	}
 	ast, err := parser.Parse(&exp)
 	if err != nil {
