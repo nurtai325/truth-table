@@ -126,6 +126,14 @@ func (p *parser) init(tokens []scanner.Token, opers []int, vars []string) {
 	p.opers = opers
 	p.vars = vars
 	p.cursor = 0
+	p.insertParentheses()
+}
+
+func (p *parser) insertParentheses() {
+	newTokens := make([]scanner.Token, 0, len(p.tokens))
+	for i := 0; i < len(p.tokens); i++ {
+		newTokens = append(newTokens, p.tokens[i])
+	}
 }
 
 func (p *parser) parse() *Ast {
